@@ -349,3 +349,22 @@ Deux consommations à surveiller (Billing → Usage) :
    un usage intensif quotidien de ces features dépasse le quota — espacer
    les générations lourdes ou basculer ces usages vers le chemin 4
    (auto-hébergement).
+
+### Production active depuis 2026-11-19 (0.14.12)
+
+Après suspension 402 du compte historique, la production tourne sur le
+**nouveau compte** GitHub + Vercel :
+
+- **URL de production : <https://nelth-ia-mg-seven.vercel.app>**
+- Dépôt canonique : `github.com/optixai32-hue/nelth-ia-mg` (remote `origin`)
+- Compte Vercel : équipe `optixai32-hues-projects` (plan Hobby, 0 €)
+- Push sur `main` = déploiement automatique (GitHub App connectée)
+- Base de données : la MÊME instance Supabase Postgres que l'ancienne
+  production (variables copiées) → comptes et conversations conservés,
+  sessions JWT toujours valides (même `WEBUI_SECRET_KEY`)
+- 14 variables copiées par API ; les 3 variables Google OAuth
+  (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` /
+  `GOOGLE_CONNECTOR_REDIRECT_URI`) sont « sensitive » et non lisibles par
+  API : à ressaisir dans Settings → Environment Variables si la connexion
+  Google est utilisée (l'URI de callback doit de toute façon pointer sur
+  la nouvelle URL).
