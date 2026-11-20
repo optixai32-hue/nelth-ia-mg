@@ -386,3 +386,16 @@ automatiques GA4 (first_visit, session_start, page_view initial) + un
 page_view debouncé par changement de route SPA. Rapport dans Console
 Firebase → Analytics → Dashboard (comptage des visiteurs dès la mise en
 ligne ; DebugView pour vérifier en direct).
+
+**0.14.14 (2026-11-20) — fix app/duplicate-app** : l'initial Analytics
+(0.14.13) cassait la connexion Google — `analytics-bridge.js` initialisait
+l'app Firebase `'[DEFAULT]'` avec la config complète (7 champs), puis le
+clic « Continue with Google » rappelait `initializeApp` avec la config
+partielle → `Firebase App named '[DEFAULT]' already exists with different
+options or config (app/duplicate-app)`. Correctif double : le pont analytics
+utilise désormais une app **NOMMÉE** `'nelth-analytics'` (jamais
+`'[DEFAULT]'`), et `google-bridge.js` RÉUTILISE une éventuelle app
+`'[DEFAULT]'` existante au lieu de la ré-initialiser (même apiKey = même
+projet, l'Auth ignore les champs supplémentaires). Les deux ponts s'ignorent
+quel que soit l'ordre d'exécution ; cache-bust `?v=20261120a2` sur les deux
+scripts.

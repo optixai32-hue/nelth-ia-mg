@@ -22,6 +22,14 @@
  *   • CDN gstatic injoignable / import qui échoue / quota — tout est avalé ;
  *   • aucune donnée personnelle n'est collectée : événements standards GA4
  *     uniquement (page_view + automatiques), aucun setUserId.
+ *
+ * 0.14.14 — app NOMMÉE 'nelth-analytics' : le nom '[DEFAULT]' reste réservé
+ * au pont Google (google-bridge.js). Deux initializeApp avec des options
+ * différentes sur le MÊME nom lèvent app/duplicate-app (la config analytics
+ * est un sur-ensemble — measurementId, appId… — donc jamais « égales » à la
+ * config partielle du pont Google) et cassaient la connexion Google. Avec
+ * une app nommée, Analytics fonctionne pleinement et ne touche jamais
+ * '[DEFAULT]' — les deux ponts s'ignorent quel que soit l'ordre d'exécution.
  */
 (() => {
   if (window.__nelthAnalyticsBridge) return;
@@ -29,6 +37,7 @@
 
   var FIREBASE_APP = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   var FIREBASE_ANALYTICS = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js';
+  var APP_NAME = 'nelth-analytics';
 
   // Ressemble la config (le SPA appelle déjà /api/config au boot ; ici c'est
   // mis en cache par le navigateur, coût quasi nul — même garde que
@@ -48,7 +57,7 @@
           // démarrer — on reste silencieux.
           return analyticsMod.isSupported().then(function (ok) {
             if (!ok) return null;
-            var app = appMod.initializeApp(a);
+            var app = obtainAnalyticsApp(appMod, a);
             var analytics = analyticsMod.getAnalytics(app);
             watchSpaRoutes(analyticsMod, analytics);
             return analytics;
@@ -57,6 +66,18 @@
         .catch(function () { /* CDN injoignable, quota, etc. — silence total */ });
     })
     .catch(function () { /* /api/config indisponible — analytics désactivé */ });
+
+  /**
+   * App NOMMÉE (jamais '[DEFAULT]', réservé au pont Google) : initializeApp
+   * avec un nom déjà pris et des options différentes lève app/duplicate-app.
+   * Le pont Google a aussi sa propre garde (réutilisation de '[DEFAULT]').
+   */
+  function obtainAnalyticsApp(appMod, cfg) {
+    var exists = appMod.getApps().some(function (x) {
+      return x.name === APP_NAME;
+    });
+    return exists ? appMod.getApp(APP_NAME) : appMod.initializeApp(cfg, APP_NAME);
+  }
 
   /**
    * page_view à chaque changement de route SPA (le SDK n'émet automatiquement

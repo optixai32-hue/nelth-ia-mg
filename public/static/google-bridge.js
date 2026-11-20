@@ -78,7 +78,16 @@
 
     Promise.all([import(FIREBASE_APP), import(FIREBASE_AUTH)])
       .then(function (mods) {
-        var app = mods[0].initializeApp(fbCfg);
+        // 0.14.14 — garde app/duplicate-app : si une app '[DEFAULT]'
+        // existe déjà (p.ex. créée par un autre bridge Firebase avec une
+        // config plus complète), on la RÉUTILISE au lieu de rappeler
+        // initializeApp — deux options différentes sur le même nom lèvent
+        // une erreur. Réutiliser est sûr : même apiKey = même projet, le SDK
+        // Auth n'utilise pas les champs supplémentaires (measurementId…).
+        var hasDefault = mods[0].getApps().some(function (x) {
+          return x.name === '[DEFAULT]';
+        });
+        var app = hasDefault ? mods[0].getApp() : mods[0].initializeApp(fbCfg);
         var auth = mods[1].getAuth(app);
         return mods[1].signInWithPopup(auth, new mods[1].GoogleAuthProvider());
       })
