@@ -10,9 +10,21 @@
  *   2. Server-wide env (GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN) — the legacy
  *      single-account mode, still honored when no user token is available.
  *
- * When NEITHER is available the built-in connectors fall back to DEMO MODE
- * (simulated data, clearly flagged in every result).
+ * Client credentials resolve through lib/apps/google-oauth-defaults.ts
+ * (env GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET first, committed defaults
+ * otherwise) — the SAME source the connectors router uses to build the
+ * OAuth authorize/token URLs. 0.14.15 fixes a split-brain: this module read
+ * process.env only, so on hosts without the env vars (Vercel) the "Connecter"
+ * flow worked (router defaults) but every tool call fell back to DEMO MODE
+ * (getGoogleAccessToken → null) even though the user's refresh token was
+ * safely stored — the exact "mode démo" regression.
+ *
+ * When NEITHER a user token NOR the env triplet (client + secret +
+ * GOOGLE_REFRESH_TOKEN) is available the built-in connectors fall back to
+ * DEMO MODE (simulated data, clearly flagged in every result).
  */
+import { googleClientId, googleClientSecret } from '@/lib/apps/google-oauth-defaults';
+
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
 interface CachedToken {
@@ -23,11 +35,13 @@ interface CachedToken {
 /** Access-token cache, keyed by the refresh token that minted it. */
 const tokenCache = new Map<string, CachedToken>();
 
-/** True when the three Google OAuth environment variables are present. */
+/** True when the three Google OAuth environment variables are present.
+ * (Server-wide single-account mode — GOOGLE_CLIENT_ID/SECRET may come from
+ * the committed defaults, but GOOGLE_REFRESH_TOKEN is env-only by nature.) */
 export function googleCredsConfigured(): boolean {
   return Boolean(
-    process.env.GOOGLE_CLIENT_ID &&
-      process.env.GOOGLE_CLIENT_SECRET &&
+    googleClientId() &&
+      googleClientSecret() &&
       process.env.GOOGLE_REFRESH_TOKEN
   );
 }
@@ -46,7 +60,12 @@ export async function getGoogleAccessToken(refreshToken?: string | null): Promis
   const userToken = typeof refreshToken === 'string' && refreshToken ? refreshToken : null;
   const envToken = googleCredsConfigured() ? (process.env.GOOGLE_REFRESH_TOKEN as string) : null;
   const rt = userToken ?? envToken;
-  if (!rt || !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) return null;
+  // Same credential source as the connectors router (env || committed
+  // defaults) — a user connection made through the defaults MUST be able to
+  // exchange its refresh token with the very same client credentials.
+  const clientId = googleClientId();
+  const clientSecret = googleClientSecret();
+  if (!rt || !clientId || !clientSecret) return null;
 
   const hit = tokenCache.get(rt);
   if (hit && hit.exp > Date.now() + 60_000) return hit.token;
@@ -55,8 +74,8 @@ export async function getGoogleAccessToken(refreshToken?: string | null): Promis
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID as string,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET as string,
+        client_id: clientId,
+        client_secret: clientSecret,
         refresh_token: rt,
         grant_type: 'refresh_token',
       }),

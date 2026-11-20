@@ -419,3 +419,21 @@ utilise désormais une app **NOMMÉE** `'nelth-analytics'` (jamais
 projet, l'Auth ignore les champs supplémentaires). Les deux ponts s'ignorent
 quel que soit l'ordre d'exécution ; cache-bust `?v=20261120a2` sur les deux
 scripts.
+
+**0.14.15 (2026-11-20) — fix « je suis en mode démo » après connexion** :
+l'utilisateur connectait Gmail (« Connecter » du sélecteur @, OAuth OK,
+refresh token PERSISTÉ en base) mais chaque appel d'outil répondait en
+mode démo — « aucun compte Google n'est connecté ». Cause : split-brain
+des identifiants clients. Le routeur connecteurs construisait l'OAuth avec
+`google-oauth-defaults.ts` (env `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`
+**ou** défauts codés), mais `lib/connectors/google.ts`
+(`getGoogleAccessToken`) ne lisait QUE `process.env` — or ces variables
+n'existent pas sur le projet Vercel (uniquement
+`GOOGLE_CONNECTOR_REDIRECT_URI`). La connexion s'enregistrait avec les
+défauts, puis l'échange du refresh token exigeait les variables
+environnementales absentes → token d'accès `null` → retombade démo. Fix :
+`google.ts` résout les identifiants clients via la MÊME source
+(`googleClientId()`/`googleClientSecret()`, env d'abord sinon défauts) —
+un refresh token obtenu par le flux peut toujours s'échanger contre les
+identifiants qui l'ont émis. Aucune variable d'env à ajouter : les défauts
+commis sont le client réel (fragmentés pour la Push Protection GitHub).
