@@ -360,7 +360,10 @@ Deux consommations à surveiller (Billing → Usage) :
 Après suspension 402 du compte historique, la production tourne sur le
 **nouveau compte** GitHub + Vercel :
 
-- **URL de production : <https://nelth-ia-mg-seven.vercel.app>**
+- **URL de production : <https://nelth-ia-mg.vercel.app>** (depuis le
+  2026-11-20 : domaine canonique récupéré par le nouveau compte — l'URL
+  historique redevient LA production ; l'URL de migration
+  `nelth-ia-mg-seven.vercel.app` redirige en 307 vers elle)
 - Dépôt canonique : `github.com/optixai32-hue/nelth-ia-mg` (remote `origin`)
 - Compte Vercel : équipe `optixai32-hues-projects` (plan Hobby, 0 €)
 - Push sur `main` = déploiement automatique (GitHub App connectée)
@@ -373,6 +376,23 @@ Après suspension 402 du compte historique, la production tourne sur le
   API : à ressaisir dans Settings → Environment Variables si la connexion
   Google est utilisée (l'URI de callback doit de toute façon pointer sur
   la nouvelle URL).
+
+**2026-11-20 — re-canonisation du domaine + fix connecteurs Gmail** : le
+domaine `nelth-ia-mg.vercel.app` a été ajouté au projet du nouveau compte
+et `-seven` redirige vers lui (307). Symptôme corrigé : « Connexion Gmail
+indisponible depuis https://nelth-ia-mg.vercel.app : ce client Google
+n'autorise la redirection que vers
+https://nelth-ia-mg-seven.vercel.app/oauth/google/callback » — la garde
+anti-origine croisée (routers/connectors.ts) comparait l'origine de la
+requête à `GOOGLE_CONNECTOR_REDIRECT_URI`, encore pointée sur `-seven`.
+Fix : la variable vaut désormais **la racine canonique**
+`https://nelth-ia-mg.vercel.app/` — la SEULE URI que le client Google Cloud
+autorise historiquement (octet par octet, slash final compris) et celle
+qu'exige le flux connecteurs : le retour OAuth atterrit sur « / » avec
+`?code&state`, et `loader.js` transfère vers
+`/api/v1/connectors/{id}/callback` (cookie d'état `Path=/`). La valeur par
+défaut du code (`src/lib/apps/google-oauth-defaults.ts`) est déjà cette
+racine : sans la variable d'env, le comportement est identique.
 
 **0.14.13 (2026-11-20) — Firebase Analytics (GA4)** : Google Analytics a été
 activé dans la console Firebase du projet `ethan-nairah` (measurementId
