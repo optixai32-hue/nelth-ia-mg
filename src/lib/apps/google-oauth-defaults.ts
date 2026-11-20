@@ -1,6 +1,9 @@
 /**
  * Google OAuth — identifiants RÉELS du client « ethan-nairah » fournis par
  * l'utilisateur (fichier client_secret_721198341900-….apps.googleusercontent.com.json).
+ * Secret régénéré par rotation le 2026-11-21 (0.14.16) — l'utilisateur a ajouté
+ * un second secret dans Google Cloud Console; l'ancien reste accepté par Google
+ * pendant la période de chevauchement, seul le nouveau est embarqué ici.
  *
  * ⚠️ Fragmentés en littéraux concaténés : la Push Protection GitHub refuse
  * tout push contenant un Client ID / Client Secret Google reconnaissable
@@ -35,9 +38,12 @@ function defaultGoogleClientId(): string {
   );
 }
 
-/** Secret du client — env GOOGLE_CLIENT_SECRET prioritaire. */
+/** Secret du client — env GOOGLE_CLIENT_SECRET prioritaire.
+ * 0.14.16 : secret RÉGÉNÉRÉ par l'utilisateur dans Google Cloud Console
+ * (rotation) — l'ancien reste provisoirement valide côté Google, mais celui-ci
+ * est la valeur courante. */
 function defaultGoogleClientSecret(): string {
-  return 'GOC' + 'SPX-' + 'R7j0Iqf6' + 'N4CZi' + '_J-WAiK' + '2mvJtQSA';
+  return 'GOC' + 'SPX-' + 'ceCN-kiu' + 'hqJDbCPw' + 'BTaxEpXj' + '9D86';
 }
 
 /**

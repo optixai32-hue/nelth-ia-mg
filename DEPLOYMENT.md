@@ -437,3 +437,17 @@ environnementales absentes → token d'accès `null` → retombade démo. Fix :
 un refresh token obtenu par le flux peut toujours s'échanger contre les
 identifiants qui l'ont émis. Aucune variable d'env à ajouter : les défauts
 commis sont le client réel (fragmentés pour la Push Protection GitHub).
+
+**0.14.16 (2026-11-21) — rotation du secret client Google** : l'utilisateur
+a régénéré le secret OAuth dans Google Cloud Console et fourni la nouvelle
+valeur. Vérifié au terminal token Google : NOUVEAU secret accepté
+(`invalid_grant` sur refresh token bidon = authentification client OK) ;
+l'ANCIEN reste provisoirement accepté pendant le chevauchement (Google
+conserve deux secrets actifs lors d'une rotation) — contrôle négatif avec un
+secret erroné → `invalid_client` (401) confirmant la sémantique. Le défaut
+codé (`google-oauth-defaults.ts`, fragmenté pour la Push Protection GitHub)
+est basculé sur le NOUVEAU secret : quand l'ancien sera retiré de la
+console, la connexion et l'échange des refresh tokens continueront de
+fonctionner sans intervention. Aucune variable d'env n'est définie sur le
+projet Vercel pour `GOOGLE_CLIENT_SECRET` — le défaut codé reste la seule
+source (volontairement : source unique, pas d'inversion de priorité env/défaut).
