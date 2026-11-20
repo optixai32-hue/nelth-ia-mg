@@ -4,6 +4,7 @@ import { VERSION, env, DEFAULT_USER_PERMISSIONS } from '@/lib/constants';
 import { configGet } from '@/lib/config';
 import { getPermissions } from '@/lib/access-control';
 import { publicOAuthProviders } from './routers/oauth';
+import { firebaseAnalyticsConfig } from '@/lib/firebase-analytics';
 import { isGuestUser } from '@/lib/guests';
 
 /**
@@ -116,6 +117,13 @@ export async function handleGetAppConfig(ctx: Ctx): Promise<Response> {
       // multi-colour G logo) renders on /auth; other providers appear only
       // once their credentials are configured (publicOAuthProviders()).
       providers: publicOAuthProviders(),
+    },
+    // Audience measurement (Google Analytics via Firebase) — the public web
+    // config (see lib/firebase-analytics.ts) consumed pre-auth by
+    // /static/analytics-bridge.js. null (key absent) when the measurementId
+    // (G-…) is not configured: the bridge then stays inert.
+    analytics: {
+      firebase: firebaseAnalyticsConfig(),
     },
     // UI metadata consumed pre-auth by the login page (Python: ui metadata config).
     // auth_logo_position 'center' renders the large brand logo above the auth card.

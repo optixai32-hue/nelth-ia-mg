@@ -174,6 +174,11 @@ Copier `.env.example` → `.env`. Les valeurs marquées **obligatoires** doivent
 | `KILO_GATEWAY_BASE_URL` | ⬜ | Défaut : `https://ai-gateway.kilo.ai/api/v1` |
 | `FIREBASE_API_KEY` | ✅ | Clé web Firebase Auth |
 | `FIREBASE_PROJECT_ID` | ✅ | Projet Firebase |
+| `FIREBASE_AUTH_DOMAIN` | ⬜ | Défaut : `<projectId>.firebaseapp.com` |
+| `FIREBASE_STORAGE_BUCKET` | ⬜ | Bucket du projet (ex. `ethan-nairah.firebasestorage.app`) |
+| `FIREBASE_MESSAGING_SENDER_ID` | ⬜ | Sender ID de la config web |
+| `FIREBASE_APP_ID` | ⬜ | App ID web Firebase (`1:…:web:…`) |
+| `FIREBASE_MEASUREMENT_ID` | ⬜ | **Analytics GA4** (`G-…`) — active la mesure d'audience : `/api/config` expose alors `analytics.firebase` (config web publique), consommée par `/static/analytics-bridge.js` (SDK CDN gstatic, page_view initiale + routes SPA debouncées 300 ms, échecs toujours silencieux). Sans cette variable, l'analytics reste totalement inerte |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ⬜ | Connexion Google ; rediriger l'URI autorisée vers `https://VOTRE-DOMAINE/api/auth/google/callback` |
 | `ENABLE_OAUTH`, `ENABLE_OAUTH_SIGNUP`, `OAUTH_MERGE_ACCOUNTS_BY_EMAIL` | ⬜ | Réglages Google OAuth |
 | `ENABLE_SIGNUP` | ⬜ | Autoriser les inscriptions (défaut : `true`) |
@@ -350,7 +355,7 @@ Deux consommations à surveiller (Billing → Usage) :
    les générations lourdes ou basculer ces usages vers le chemin 4
    (auto-hébergement).
 
-### Production active depuis 2026-11-19 (0.14.12)
+### Production active depuis 2026-11-19 (0.14.12) — Analytics GA4 en 0.14.13
 
 Après suspension 402 du compte historique, la production tourne sur le
 **nouveau compte** GitHub + Vercel :
@@ -368,3 +373,16 @@ Après suspension 402 du compte historique, la production tourne sur le
   API : à ressaisir dans Settings → Environment Variables si la connexion
   Google est utilisée (l'URI de callback doit de toute façon pointer sur
   la nouvelle URL).
+
+**0.14.13 (2026-11-20) — Firebase Analytics (GA4)** : Google Analytics a été
+activé dans la console Firebase du projet `ethan-nairah` (measurementId
+`G-81V472GRG5`). 4 variables additionnelles posées par API sur le projet
+Vercel (`FIREBASE_APP_ID`, `FIREBASE_STORAGE_BUCKET`,
+`FIREBASE_MESSAGING_SENDER_ID`, `FIREBASE_MEASUREMENT_ID` — la config web
+Firebase est publique par conception). `/api/config` sert
+`analytics.firebase`, `/static/analytics-bridge.js` charge le SDK depuis le
+CDN gstatic (mêmes versions 10.12.2 que le pont Google) : événements
+automatiques GA4 (first_visit, session_start, page_view initial) + un
+page_view debouncé par changement de route SPA. Rapport dans Console
+Firebase → Analytics → Dashboard (comptage des visiteurs dès la mise en
+ligne ; DebugView pour vérifier en direct).

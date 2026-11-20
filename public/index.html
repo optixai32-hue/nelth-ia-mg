@@ -162,6 +162,16 @@
                      Le bridge reste chargé mais inerte (ENABLED = false) :
                      retour arrière = ENABLED = true + bumper ?v=. -->
                 <script src="/static/autoscroll-bridge.js?v=20261118a2" defer></script>
+                <!-- Analytics Firebase (GA4) : mesure d'audience Google Analytics
+                     via le projet Firebase ethan-nairah. Config publique servie
+                     pre-auth par /api/config (analytics.firebase) — le bridge
+                     charge le SDK depuis le CDN gstatic (10.12.2, mêmes
+                     versions que google-bridge.js), n'émet rien sans
+                     measurementId (G-…), échoue toujours en silence (jamais
+                     bloquant). page_view : chargement initial (auto SDK) +
+                     changements de route SPA (pushState/replaceState/popstate,
+                     debouncés 300 ms). Voir analytics-bridge.js. -->
+                <script src="/static/analytics-bridge.js?v=20261120a1" defer></script>
 
                 <script>
                         function resizeIframe(obj) {
